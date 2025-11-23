@@ -1,0 +1,23 @@
+1st Section(informal just 1 slide, for the start cover slide) 
+- name & project description
+
+2nd Section - Introduction
+- An intro to Dual Photography 
+- The amazing things about it, like relighting the scene using any illumination pattern
+- The more amazing thing about scene reconstruction from the Projectors viewpoint
+(how dual photography is possible and all a little bit of prereq tell about Helmholtz reciprocity and all)
+
+3rd Section - Formulating the Problem
+- Problem Formulation
+- Showing the difficulty or the infeasibility of the whole Light Transport Matrix Computation
+- The Hypothesis of The Light Transport Matrix is mostly sparse in some basis which enables Compression Sensing
+- A quick discourse towards Compression Sensing : (The compression sensing problem)
+- The final formulation of the problem combined with Compressed Sensing and then formulating the optimal control problem
+
+4th Section - Solving the Problem
+- Showing Assumptions Made
+- Choice of a strategy (Optimal Control)
+
+5th Section - Experimentation & Results
+- Show the Experimentation setup in blender
+- Show the Blender scene reconstructed images of the card
