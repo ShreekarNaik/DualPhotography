@@ -6,7 +6,7 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import cv2
 import numpy as np
@@ -14,23 +14,6 @@ import numpy as np
 
 def _ensure_directory(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
-
-
-def _load_projector_resolution(blender_dir: Path) -> Tuple[int, int]:
-    """
-    Infer projector resolution from an existing pattern image.
-
-    Falls back to a reasonable default if the file is missing or unreadable.
-    """
-    pattern_path = blender_dir / "projection_pattern.png"
-    if pattern_path.exists():
-        img = cv2.imread(str(pattern_path), cv2.IMREAD_UNCHANGED)
-        if img is not None:
-            height, width = img.shape[:2]
-            return width, height
-
-    # Default to 1024x768 if nothing is available.
-    return 1024, 768
 
 
 def _render_with_blender(blender_dir: Path) -> None:
@@ -155,9 +138,11 @@ class ExperimentRun:
 
 def create_experiment_run(
     algorithm: str,
-    blender_dir: Union[Path, str] = Path("blender-virtual-experiment"),
+    blender_dir: Union[Path, str],
     runs_root: Union[Path, str] = Path("runs"),
     run_name: Optional[str] = None,
+    projector_width: Optional[int] = None,
+    projector_height: Optional[int] = None,
     extra_metadata: Optional[Dict[str, Any]] = None,
 ) -> ExperimentRun:
     """
@@ -177,7 +162,11 @@ def create_experiment_run(
     run_dir = runs_root / run_name
     run_dir.mkdir(parents=True, exist_ok=False)
 
-    projector_width, projector_height = _load_projector_resolution(blender_dir)
+    if projector_width is None or projector_height is None:
+        raise ValueError(
+            "projector_width and projector_height must be provided to "
+            "create_experiment_run; they are not inferred from images."
+        )
 
     return ExperimentRun(
         blender_dir=blender_dir,
@@ -188,4 +177,3 @@ def create_experiment_run(
         start_time=datetime.now().isoformat(timespec="seconds"),
         extra_metadata=extra_metadata or {},
     )
-

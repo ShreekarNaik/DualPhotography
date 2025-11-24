@@ -68,6 +68,8 @@ def run_adaptive_scan(
     noise_threshold: float = 1e5,
     max_depth: int = 10,
     max_measurements: Optional[int] = None,
+    projector_width: int = 1024,
+    projector_height: int = 768,
     blender_dir: Union[Path, str] = Path("blender-virtual-experiment"),
     runs_root: Union[Path, str] = Path("runs"),
     run_name: Optional[str] = None,
@@ -86,6 +88,8 @@ def run_adaptive_scan(
         blender_dir=blender_dir,
         runs_root=runs_root,
         run_name=run_name,
+        projector_width=projector_width,
+        projector_height=projector_height,
         extra_metadata={
             "noise_threshold": noise_threshold,
             "max_depth": max_depth,
@@ -197,6 +201,18 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         help="Optional cap on total number of measurements.",
     )
     parser.add_argument(
+        "--projector-width",
+        type=int,
+        default=1024,
+        help="Projector resolution width in pixels (default: 1024).",
+    )
+    parser.add_argument(
+        "--projector-height",
+        type=int,
+        default=768,
+        help="Projector resolution height in pixels (default: 768).",
+    )
+    parser.add_argument(
         "--blender-dir",
         type=Path,
         default=Path("blender-virtual-experiment"),
@@ -225,6 +241,8 @@ def main(argv: Optional[List[str]] = None) -> None:
         noise_threshold=args.noise_threshold,
         max_depth=args.max_depth,
         max_measurements=args.max_measurements,
+        projector_width=args.projector_width,
+        projector_height=args.projector_height,
         blender_dir=args.blender_dir,
         runs_root=args.runs_root,
         run_name=args.run_name,
@@ -235,4 +253,3 @@ def main(argv: Optional[List[str]] = None) -> None:
 
 if __name__ == "__main__":
     main()
-
