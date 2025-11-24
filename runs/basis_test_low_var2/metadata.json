@@ -1,0 +1,16 @@
+{
+  "run_name": "basis_test_low_var2",
+  "algorithm": "decomposition_basis_scan",
+  "start_time": "2025-11-24T07:24:33",
+  "end_time": "2025-11-24T07:34:37",
+  "blender_dir": "/Users/shreekarsnaik/Documents/Courses/AE662/Project/blender-virtual-experiment",
+  "projector_width": 300,
+  "projector_height": 300,
+  "num_measurements": 36,
+  "include_inverse": true,
+  "max_planes": null,
+  "noise_threshold": 5.0,
+  "num_pixels": 90000,
+  "num_planes": 17,
+  "mapping_products_file": "mapping_products.npz"
+}

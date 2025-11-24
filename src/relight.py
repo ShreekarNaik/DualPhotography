@@ -25,13 +25,28 @@ def run_relighting(
     if pattern is None:
         raise FileNotFoundError(f"Failed to read projector pattern: {pattern_path}")
 
-    proj_height, proj_width, channels = pattern.shape
+    proj_height, proj_width = pattern.shape[:2]
     expected_width, expected_height = mapping.projector_size
     if (proj_width, proj_height) != (expected_width, expected_height):
-        raise ValueError(
-            "Projector pattern resolution mismatch: expected "
-            f"{expected_width}x{expected_height}, got {proj_width}x{proj_height}"
+        # Automatically resize the input pattern to the projector's
+        # native resolution so that we can still use the stored
+        # projector-to-camera mappings even if the user supplies a
+        # camera-view image or a mismatched resolution.
+        if proj_width <= 0 or proj_height <= 0:
+            raise ValueError(
+                f"Invalid projector pattern resolution: {proj_width}x{proj_height}"
+            )
+        # Use area interpolation when downsampling, linear when upsampling.
+        if proj_width > expected_width or proj_height > expected_height:
+            interpolation = cv2.INTER_AREA
+        else:
+            interpolation = cv2.INTER_LINEAR
+        pattern = cv2.resize(
+            pattern, (expected_width, expected_height), interpolation=interpolation
         )
+        proj_height, proj_width = pattern.shape[:2]
+
+    channels = pattern.shape[2] if pattern.ndim == 3 else 1
 
     pattern = pattern.astype(np.float32)
 

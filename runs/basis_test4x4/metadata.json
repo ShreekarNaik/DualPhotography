@@ -1,0 +1,16 @@
+{
+  "run_name": "basis_test4x4",
+  "algorithm": "decomposition_basis_scan",
+  "start_time": "2025-11-24T06:16:34",
+  "end_time": "2025-11-24T06:17:40",
+  "blender_dir": "/Users/shreekarsnaik/Documents/Courses/AE662/Project/blender-virtual-experiment",
+  "projector_width": 4,
+  "projector_height": 4,
+  "num_measurements": 10,
+  "include_inverse": true,
+  "max_planes": null,
+  "noise_threshold": 5.0,
+  "num_pixels": 16,
+  "num_planes": 4,
+  "mapping_products_file": "mapping_products.npz"
+}

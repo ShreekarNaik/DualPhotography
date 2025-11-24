@@ -10,6 +10,8 @@ Usage: $(basename "$0") <mode> [options...]
 Modes:
   basis     - Gray-code logarithmic basis scan (Algorithm 2)
   adaptive  - Adaptive hierarchical feedback scan (Algorithm 3)
+  relight   - Relight a captured run using stored Gray-code mappings
+  projector-pov - Compute projector viewpoint image via stored mappings
 
 Common options:
   --run-name NAME           Explicit run folder name under runs/
@@ -62,27 +64,64 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "${RUN_NAME}" ]]; then
+if [[ -z "${RUN_NAME}" && ( "${MODE}" == "basis" || "${MODE}" == "adaptive" ) ]]; then
   TS="$(date +"%Y%m%d_%H%M%S")"
   RUN_NAME="${MODE}_${TS}"
+fi
+
+RUN_NAME_ARGS=()
+if [[ -n "${RUN_NAME}" ]]; then
+  RUN_NAME_ARGS=(--run-name "${RUN_NAME}")
 fi
 
 export PYTHONPATH="${SCRIPT_DIR}/src:${PYTHONPATH:-}"
 
 case "$MODE" in
   basis)
-    python3 -m decomposition_basis_scan \
-      --blender-dir "${BLENDER_DIR}" \
-      --runs-root "${RUNS_ROOT}" \
-      --run-name "${RUN_NAME}" \
-      "${EXTRA_ARGS[@]}"
+    ARGS=(
+      --blender-dir "${BLENDER_DIR}"
+      --runs-root "${RUNS_ROOT}"
+    )
+    if [[ ${#RUN_NAME_ARGS[@]} -gt 0 ]]; then
+      ARGS+=("${RUN_NAME_ARGS[@]}")
+    fi
+    if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
+      ARGS+=("${EXTRA_ARGS[@]}")
+    fi
+    python3 -m decomposition_basis_scan "${ARGS[@]}"
     ;;
   adaptive)
-    python3 -m adaptive_scan \
-      --blender-dir "${BLENDER_DIR}" \
-      --runs-root "${RUNS_ROOT}" \
-      --run-name "${RUN_NAME}" \
-      "${EXTRA_ARGS[@]}"
+    ARGS=(
+      --blender-dir "${BLENDER_DIR}"
+      --runs-root "${RUNS_ROOT}"
+    )
+    if [[ ${#RUN_NAME_ARGS[@]} -gt 0 ]]; then
+      ARGS+=("${RUN_NAME_ARGS[@]}")
+    fi
+    if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
+      ARGS+=("${EXTRA_ARGS[@]}")
+    fi
+    python3 -m adaptive_scan "${ARGS[@]}"
+    ;;
+  relight)
+    ARGS=(--runs-root "${RUNS_ROOT}")
+    if [[ ${#RUN_NAME_ARGS[@]} -gt 0 ]]; then
+      ARGS+=("${RUN_NAME_ARGS[@]}")
+    fi
+    if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
+      ARGS+=("${EXTRA_ARGS[@]}")
+    fi
+    python3 -m relight "${ARGS[@]}"
+    ;;
+  projector-pov)
+    ARGS=(--runs-root "${RUNS_ROOT}")
+    if [[ ${#RUN_NAME_ARGS[@]} -gt 0 ]]; then
+      ARGS+=("${RUN_NAME_ARGS[@]}")
+    fi
+    if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
+      ARGS+=("${EXTRA_ARGS[@]}")
+    fi
+    python3 -m projector_pov "${ARGS[@]}"
     ;;
   *)
     echo "Unknown mode: ${MODE}" >&2

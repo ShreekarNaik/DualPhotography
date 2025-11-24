@@ -4,11 +4,13 @@ import argparse
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
+import cv2
 import numpy as np
 
 from experiment import ExperimentRun, create_experiment_run
+from structured_light_products import MappingProducts, save_mapping_products
 
 
 @dataclass
@@ -64,6 +66,116 @@ def _generate_pattern_for_region(
     return pattern
 
 
+def _capture_reference_frame(
+    experiment: ExperimentRun,
+    value: int,
+    label: str,
+) -> np.ndarray:
+    """
+    Capture a reference frame (all-ON or all-OFF) and log it.
+
+    This mirrors the basis-scan workflow so that adaptive runs
+    produce the same albedo and signal-strength products needed
+    for relighting and projector POV utilities.
+    """
+    pattern = np.full(
+        (experiment.projector_height, experiment.projector_width), value, dtype=np.uint8
+    )
+    captured_img, rel_proj, rel_cap, measurement_index = experiment.capture(pattern)
+    experiment.log_measurement(
+        {
+            "measurement_index": measurement_index,
+            "type": "reference",
+            "reference_label": label,
+            "projection_pattern": rel_proj,
+            "captured_image": rel_cap,
+            "mean_intensity": float(captured_img.mean()),
+            "energy_sum": float(captured_img.sum()),
+        }
+    )
+    return captured_img
+
+
+def _build_adaptive_mapping_products(
+    run_dir: Path,
+    reference_frames: Dict[str, np.ndarray],
+    terminal_mappings: List[Dict[str, object]],
+    noise_threshold: float,
+    projector_width: int,
+    projector_height: int,
+    min_relative_intensity: float = 0.05,
+) -> MappingProducts:
+    """
+    Construct MappingProducts from adaptive terminal measurements.
+
+    For each confident camera pixel (mask=True), assign the projector
+    coordinate corresponding to the strongest single-pixel response
+    observed among all terminal regions. This approximates
+    argmax_j T_ij and is compatible with relight/projector_pov.
+    """
+    if "white" not in reference_frames or "black" not in reference_frames:
+        raise RuntimeError("Missing reference frames required for adaptive decoding.")
+
+    white_img = reference_frames["white"]
+    black_img = reference_frames["black"]
+    if white_img.shape != black_img.shape:
+        raise ValueError("Reference frames I_white and I_black must have same shape.")
+
+    camera_height, camera_width = white_img.shape
+
+    white_f = white_img.astype(np.float32)
+    black_f = black_img.astype(np.float32)
+
+    signal_strength = np.clip(white_f - black_f, a_min=0.0, a_max=None)
+    mask = signal_strength > float(noise_threshold)
+
+    map_x = np.full((camera_height, camera_width), -1, dtype=np.int32)
+    map_y = np.full((camera_height, camera_width), -1, dtype=np.int32)
+    best_response = np.zeros((camera_height, camera_width), dtype=np.float32)
+
+    safe_signal = np.where(signal_strength > 1e-6, signal_strength, 1.0)
+
+    for entry in terminal_mappings:
+        x_proj = int(entry["x"])
+        y_proj = int(entry["y"])
+        rel_cap = Path(str(entry["captured_image"]))
+        cap_path = run_dir / rel_cap
+
+        capture = cv2.imread(str(cap_path), cv2.IMREAD_GRAYSCALE)
+        if capture is None:
+            raise FileNotFoundError(f"Failed to read terminal capture at {cap_path}")
+
+        if capture.shape != (camera_height, camera_width):
+            raise ValueError(
+                "Terminal capture resolution mismatch: expected "
+                f"{camera_width}x{camera_height}, got "
+                f"{capture.shape[1]}x{capture.shape[0]}"
+            )
+
+        capture_f = capture.astype(np.float32)
+        response = np.clip(capture_f - black_f, a_min=0.0, a_max=None)
+
+        relative = response / safe_signal
+        candidate = mask & (response > best_response) & (
+            relative >= min_relative_intensity
+        )
+
+        map_x[candidate] = x_proj
+        map_y[candidate] = y_proj
+        best_response[candidate] = response[candidate]
+
+    return MappingProducts(
+        map_x=map_x,
+        map_y=map_y,
+        mask=mask,
+        signal_strength=signal_strength,
+        i_white=white_img.copy(),
+        i_black=black_img.copy(),
+        noise_threshold=float(noise_threshold),
+        projector_size=(projector_width, projector_height),
+    )
+
+
 def run_adaptive_scan(
     noise_threshold: float = 1e5,
     max_depth: int = 10,
@@ -99,6 +211,10 @@ def run_adaptive_scan(
 
     projector_width = experiment.projector_width
     projector_height = experiment.projector_height
+
+    reference_frames: Dict[str, np.ndarray] = {}
+    reference_frames["black"] = _capture_reference_frame(experiment, 0, "black")
+    reference_frames["white"] = _capture_reference_frame(experiment, 255, "white")
 
     # Queue-based BFS over regions.
     initial_region = Region(0, 0, 0, projector_width, projector_height)
@@ -144,19 +260,21 @@ def run_adaptive_scan(
                 if child.area > 0:
                     queue.append(child)
 
+        region_record = {
+            "level": region.level,
+            "x0": region.x0,
+            "y0": region.y0,
+            "x1": region.x1,
+            "y1": region.y1,
+            "width": region.width,
+            "height": region.height,
+            "area": region.area,
+        }
+
         experiment.log_measurement(
             {
                 "measurement_index": measurement_index,
-                "region": {
-                    "level": region.level,
-                    "x0": region.x0,
-                    "y0": region.y0,
-                    "x1": region.x1,
-                    "y1": region.y1,
-                    "width": region.width,
-                    "height": region.height,
-                    "area": region.area,
-                },
+                "region": region_record,
                 "energy_sum": energy,
                 "mean_intensity": mean_intensity,
                 "decision": decision,
@@ -165,9 +283,20 @@ def run_adaptive_scan(
             }
         )
 
+    mapping_products = _build_adaptive_mapping_products(
+        run_dir=experiment.run_dir,
+        reference_frames=reference_frames,
+        terminal_mappings=terminal_mappings,
+        noise_threshold=noise_threshold,
+        projector_width=projector_width,
+        projector_height=projector_height,
+    )
+    mapping_path = save_mapping_products(experiment.run_dir, mapping_products)
+
     experiment.finalize(
         summary={
             "num_terminal_mappings": len(terminal_mappings),
+            "mapping_products_file": mapping_path.name,
         },
         extra_outputs={"terminal_mappings": terminal_mappings},
     )

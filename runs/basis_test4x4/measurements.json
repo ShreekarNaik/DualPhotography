@@ -1,0 +1,100 @@
+[
+  {
+    "measurement_index": 1,
+    "type": "reference",
+    "reference_label": "black",
+    "projection_pattern": "projection_pattern_0001.png",
+    "captured_image": "captured_image_0001.png",
+    "mean_intensity": 0.082475,
+    "energy_sum": 29691.0
+  },
+  {
+    "measurement_index": 2,
+    "type": "reference",
+    "reference_label": "white",
+    "projection_pattern": "projection_pattern_0002.png",
+    "captured_image": "captured_image_0002.png",
+    "mean_intensity": 57.550358333333335,
+    "energy_sum": 20718129.0
+  },
+  {
+    "measurement_index": 3,
+    "type": "gray_code",
+    "bit_plane": 0,
+    "polarity": "on",
+    "energy_sum": 11908165.0,
+    "mean_intensity": 33.07823611111111,
+    "projection_pattern": "projection_pattern_0003.png",
+    "captured_image": "captured_image_0003.png"
+  },
+  {
+    "measurement_index": 4,
+    "type": "gray_code",
+    "bit_plane": 0,
+    "polarity": "off",
+    "energy_sum": 11884751.0,
+    "mean_intensity": 33.013197222222225,
+    "projection_pattern": "projection_pattern_0004.png",
+    "captured_image": "captured_image_0004.png"
+  },
+  {
+    "measurement_index": 5,
+    "type": "gray_code",
+    "bit_plane": 1,
+    "polarity": "on",
+    "energy_sum": 11635829.0,
+    "mean_intensity": 32.32174722222222,
+    "projection_pattern": "projection_pattern_0005.png",
+    "captured_image": "captured_image_0005.png"
+  },
+  {
+    "measurement_index": 6,
+    "type": "gray_code",
+    "bit_plane": 1,
+    "polarity": "off",
+    "energy_sum": 12304409.0,
+    "mean_intensity": 34.178913888888886,
+    "projection_pattern": "projection_pattern_0006.png",
+    "captured_image": "captured_image_0006.png"
+  },
+  {
+    "measurement_index": 7,
+    "type": "gray_code",
+    "bit_plane": 2,
+    "polarity": "on",
+    "energy_sum": 11019860.0,
+    "mean_intensity": 30.610722222222222,
+    "projection_pattern": "projection_pattern_0007.png",
+    "captured_image": "captured_image_0007.png"
+  },
+  {
+    "measurement_index": 8,
+    "type": "gray_code",
+    "bit_plane": 2,
+    "polarity": "off",
+    "energy_sum": 12619706.0,
+    "mean_intensity": 35.05473888888889,
+    "projection_pattern": "projection_pattern_0008.png",
+    "captured_image": "captured_image_0008.png"
+  },
+  {
+    "measurement_index": 9,
+    "type": "gray_code",
+    "bit_plane": 3,
+    "polarity": "on",
+    "energy_sum": 10652674.0,
+    "mean_intensity": 29.59076111111111,
+    "projection_pattern": "projection_pattern_0009.png",
+    "captured_image": "captured_image_0009.png"
+  },
+  {
+    "measurement_index": 10,
+    "type": "gray_code",
+    "bit_plane": 3,
+    "polarity": "off",
+    "energy_sum": 12649719.0,
+    "mean_intensity": 35.138108333333335,
+    "projection_pattern": "projection_pattern_0010.png",
+    "captured_image": "captured_image_0010.png"
+  }
+]
