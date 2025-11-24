@@ -9,6 +9,7 @@ import numpy as np
 
 from run_helpers import resolve_run_dir
 from structured_light_products import load_mapping_products
+from adaptive_decode import build_frontier_mapping_from_adaptive_run
 
 
 def run_relighting(
@@ -16,10 +17,17 @@ def run_relighting(
     pattern_path: Union[Path, str],
     output_path: Optional[Union[Path, str]] = None,
     mapping_file: str = "mapping_products.npz",
+    decoder: str = "mapping",
 ) -> Path:
     run_dir = Path(run_dir)
     pattern_path = Path(pattern_path)
-    mapping = load_mapping_products(run_dir, filename=mapping_file)
+
+    if decoder == "mapping":
+        mapping = load_mapping_products(run_dir, filename=mapping_file)
+    elif decoder == "adaptive":
+        mapping = build_frontier_mapping_from_adaptive_run(run_dir)
+    else:
+        raise ValueError(f"Unknown decoder mode: {decoder!r}")
 
     pattern = cv2.imread(str(pattern_path), cv2.IMREAD_COLOR)
     if pattern is None:
@@ -120,6 +128,17 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         default="mapping_products.npz",
         help="Filename of the stored mapping data inside the run directory.",
     )
+    parser.add_argument(
+        "--decoder",
+        type=str,
+        default="mapping",
+        choices=["mapping", "adaptive"],
+        help=(
+            "Decoding strategy: 'mapping' uses stored mapping_products.npz "
+            "(Gray-code / dense), 'adaptive' reconstructs a sparse mapping "
+            "from an adaptive hierarchical scan."
+        ),
+    )
     return parser
 
 
@@ -133,6 +152,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         pattern_path=args.pattern,
         output_path=args.output,
         mapping_file=args.mapping_file,
+        decoder=args.decoder,
     )
 
     print(f"Relit image saved to {output_path}")

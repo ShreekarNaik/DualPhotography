@@ -1,0 +1,15 @@
+{
+  "run_name": "adaptive_test_v0",
+  "algorithm": "adaptive_hierarchical_scan",
+  "start_time": "2025-11-24T08:35:12",
+  "end_time": "2025-11-24T08:40:01",
+  "blender_dir": "/Users/shreekarsnaik/Documents/Courses/AE662/Project/blender-virtual-experiment",
+  "projector_width": 300,
+  "projector_height": 300,
+  "num_measurements": 36,
+  "noise_threshold": 100000.0,
+  "max_depth": 10,
+  "max_measurements": 36,
+  "num_terminal_mappings": 0,
+  "mapping_products_file": "mapping_products.npz"
+}
